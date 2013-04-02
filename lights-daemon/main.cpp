@@ -34,20 +34,26 @@ const int LIGHTS_PIN = 3;
 const char* GPIO_EXPORT = "echo \"%s\" > /sys/class/gpio/export";
 const char* GPIO_DIRECTION = "echo \"out\" > /sys/class/gpio/gpio%s/direction";
 const char* GPIO_OUTPUT = "echo \"%s\" > /sys/class/gpio/gpio%s/value";
-const char* DB_PATH = "/var/www/pi.s3db";
+const char* DB_PATH = "/var/www/%s/pi.s3db";
+
+char _dbPath[50];
 
 void init()
 {
     
-     sqlite3 *db; // sqlite3 db struct
+   sqlite3 *db; // sqlite3 db struct
 
- char *szErrMsg = 0;
-   int  rc   = sqlite3_open(DB_PATH, &db);
+   char *szErrMsg = 0;
+   int  rc   = sqlite3_open(_dbPath, &db);
      
    const char *sqlSelect = "SELECT id, state, lastupdated, pin FROM lights;";
-  char **results = NULL;
-  int rows, columns;
-  sqlite3_get_table(db, sqlSelect, &results, &rows, &columns, &szErrMsg);
+   char **results = NULL;
+   int rows, columns;
+
+ 
+
+
+    sqlite3_get_table(db, sqlSelect, &results, &rows, &columns, &szErrMsg);
 
     for (int i = 0; i <= rows; ++i)
     {
@@ -93,18 +99,36 @@ void init()
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
  string green = "\033[32m";
  string red = "\033[31m";
  string cyan = "\033[36m";
  string yellow = "\033[33m";
+
+ cout << "argc = " << argc << endl; 
+ for(int i = 0; i < argc; i++) 
+{
+   cout << "argv[" << i << "] = " << argv[i] << endl; 
+
+  if (i == 1)
+   {
+        int n;
+        n=sprintf (_dbPath,DB_PATH, argv[i]);
+
+
+   }
+
+}
+
+  //cout <<_dbPath << endl;
+
  init();
  sqlite3 *db; // sqlite3 db struct
  char *szErrMsg = 0;
  int rc;
  // open database
- rc   = sqlite3_open(DB_PATH, &db);
+ rc   = sqlite3_open(_dbPath, &db);
  if(rc) {
    std::cout << "Can't open database\n";
  }
@@ -112,12 +136,13 @@ int main()
    std::cout << "Open database successfully\n";
  } 
 
+
  
   int lastTime = 0;
   while(true)
   {
      sleep(1);
-      rc   = sqlite3_open(DB_PATH, &db);
+      rc   = sqlite3_open(_dbPath, &db);
     //this needs to track time of last query, then only query changed values since then!
     
     char queryBuffer[100];
